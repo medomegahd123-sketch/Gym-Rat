@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gym Rat</title>
+<style>
+:root{--bg:#f4f4f6;--card:#fff;--tx:#17171a;--mu:#7a7a85;--ac:#ff5a1f;--bd:#e2e2e8;--in:#ececf1;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f0f12;--card:#1a1a20;--tx:#f2f2f5;--mu:#8d8d99;--bd:#2a2a33;--in:#26262e}}
+:root[data-theme="dark"]{--bg:#0f0f12;--card:#1a1a20;--tx:#f2f2f5;--mu:#8d8d99;--bd:#2a2a33;--in:#26262e}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--card);border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:8px;padding:10px 14px}
+header h1{font-size:18px;margin:0;flex:1}
+#tm{font-variant-numeric:tabular-nums;font-size:20px;font-weight:700;color:var(--ac)}
+.ib{background:var(--in);color:var(--tx);border:0;border-radius:10px;width:38px;height:38px;font-size:16px}
+main{max-width:560px;margin:0 auto;padding:14px 14px 90px}
+button{font:inherit;cursor:pointer}
+.row{display:flex;gap:10px;margin-bottom:14px}
+.btn{flex:1;padding:13px;border-radius:12px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-weight:600}
+.pri{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.item{display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:17px}
+.item small{color:var(--mu);font-weight:400;font-size:13px}
+.x{background:none;border:0;color:var(--mu);font-size:18px;padding:4px 8px}
+.grid{display:grid;grid-template-columns:34px 1fr 1fr 1fr 40px;gap:6px;align-items:center;margin-top:8px;text-align:center}
+.grid.h{color:var(--mu);font-size:12px;margin-top:10px}
+.grid input[type=number]{width:100%;padding:9px 4px;border-radius:8px;border:0;background:var(--in);color:var(--tx);text-align:center;font-size:16px}
+.grid .pv{color:var(--mu);font-size:13px}
+.grid input[type=checkbox]{width:22px;height:22px;accent-color:var(--ac)}
+.back{background:none;border:0;color:var(--ac);font-weight:600;padding:0 0 10px}
+h2{margin:0 0 12px}
+.empty{color:var(--mu);text-align:center;padding:24px 0}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.md{background:var(--card);width:100%;max-width:560px;border-radius:18px 18px 0 0;padding:16px;max-height:80%;overflow:auto;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.md input[type=text]{flex:1;min-width:0;padding:12px;border-radius:10px;border:0;background:var(--in);color:var(--tx);font-size:16px}
+.add{display:flex;gap:8px;margin-bottom:10px}
+.add .btn{flex:0 0 auto;padding:12px 16px}
+.pick{width:100%;text-align:left;padding:12px;border:0;border-bottom:1px solid var(--bd);background:none;color:var(--tx);font-size:16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}.chip{padding:7px 10px;border-radius:999px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:13px}.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}.tag{background:var(--ac);color:#fff;font-size:11px;padding:2px 7px;border-radius:999px;vertical-align:middle}
+#rest{display:none;position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--card);border-top:1px solid var(--bd);align-items:center;justify-content:center;gap:10px;padding:10px 14px calc(10px + env(safe-area-inset-bottom,0px));font-weight:600}#rest b{color:var(--ac);font-variant-numeric:tabular-nums;font-size:20px}#rest .ib{width:auto;padding:0 12px;font-size:13px}
+</style><link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0f0f12">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+</head>
+<body>
+<header><h1>🐀 Gym Rat</h1><span id="tm">00:00</span><button class="ib" id="tp" data-a="tt">▶</button><button class="ib" data-a="tr">↺</button></header>
+<main id="app"></main>
+<div id="rest"><span>Rest <b id="rt">1:30</b></span><button class="ib" data-a="r-">−15s</button><button class="ib" data-a="r+">+15s</button><button class="ib" data-a="rs">Skip</button></div>
+<div id="mo"></div>
+<script>
+const K='gymrat-v1';
+let S=null;try{S=JSON.parse(localStorage.getItem(K))}catch(e){}
+S=S||{routines:[],library:[],timer:{run:false,start:0,acc:0}};
+const save=()=>{try{localStorage.setItem(K,JSON.stringify(S))}catch(e){}};
+let rid=null,modal=null;
+const uid=()=>Math.random().toString(36).slice(2,9);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const R=()=>S.routines.find(r=>r.id===rid);
+const DN=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],ORD=[6,0,1,2,3,4,5];
+const isToday=r=>(r.days||[]).includes(new Date().getDay());
+const sorted=()=>[...S.routines].sort((a,b)=>isToday(b)-isToday(a));
+let restEnd=0,cx=0;
+function startRest(){restEnd=Date.now()+(S.rest||90)*1000;restTick()}
+function restTick(){const rb=document.getElementById('rest'),l=Math.ceil((restEnd-Date.now())/1000);
+ if(restEnd&&l>0){rb.style.display='flex';document.getElementById('rt').textContent=Math.floor(l/60)+':'+String(l%60).padStart(2,'0')}
+ else{if(restEnd){try{navigator.vibrate&&navigator.vibrate([250,100,250])}catch(e){}}restEnd=0;rb.style.display='none'}}
+function chartHTML(){const e=R().ex[cx],H=e.hist||[];let b=`<h2>${esc(e.name)}</h2>`;
+ if(H.length<2)return b+'<div class="empty">Finish at least 2 workouts to see your progress.'+(H.length?'<br>Last top set: '+H[0].top+' kg':'')+'</div>';
+ const W=320,Ht=170,p=26,mx=Math.max(...H.map(x=>x.top)),mn=Math.min(...H.map(x=>x.top)),rg=(mx-mn)||1;
+ const pts=H.map((x,i)=>[p+i*(W-2*p)/(H.length-1),Ht-p-(x.top-mn)/rg*(Ht-2*p)]);
+ return b+`<svg viewBox="0 0 ${W} ${Ht}" width="100%"><polyline fill="none" stroke="#ff5a1f" stroke-width="3" points="${pts.map(q=>q.join(',')).join(' ')}"/>${pts.map((q,i)=>`<circle cx="${q[0]}" cy="${q[1]}" r="4" fill="#ff5a1f"/><text x="${q[0]}" y="${q[1]-9}" font-size="11" text-anchor="middle" fill="currentColor">${H[i].top}</text>`).join('')}</svg><div class="empty">Top set weight (kg) per workout<br>${H[0].d} → ${H[H.length-1].d}</div>`}
+
+function elapsed(){const t=S.timer;return t.acc+(t.run?Date.now()-t.start:0)}
+function tick(){const s=Math.floor(elapsed()/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),c=s%60,p=n=>String(n).padStart(2,'0');
+document.getElementById('tm').textContent=(h?h+':':'')+p(m)+':'+p(c);document.getElementById('tp').textContent=S.timer.run?'⏸':'▶'}
+setInterval(()=>{tick();restTick()},500);
+
+function render(){
+ const app=document.getElementById('app');let h='';
+ if(!rid){
+  h+='<div class="row"><button class="btn pri" data-a="addR">+ Add Routine</button><button class="btn" data-a="addE">+ Add Exercise</button></div>';
+  h+=S.routines.length?sorted().map(r=>`<div class="card item" data-a="open" data-id="${r.id}"><div>${esc(r.name)}${isToday(r)?' <span class="tag">Today</span>':''}<br><small>${ORD.filter(d=>(r.days||[]).includes(d)).map(d=>DN[d]).join(' · ')||'No days set'} · ${r.ex.length} exercises${r.last?' · last: '+esc(r.last):''}</small></div><button class="x" data-a="delR" data-id="${r.id}">✕</button></div>`).join(''):'<div class="empty">No routines yet. Tap “Add Routine” to start (Push, Pull, Legs…).</div>';
+ }else{
+  const r=R();
+  h+=`<button class="back" data-a="home">← Back</button><h2>${esc(r.name)}</h2><div class="chips">${ORD.map(d=>`<button class="chip${(r.days||[]).includes(d)?' on':''}" data-a="day" data-d="${d}">${DN[d]}</button>`).join('')}</div>`;
+  h+='<div class="row"><button class="btn pri" data-a="pickE">+ Add Exercise</button></div>';
+  h+=r.ex.length?r.ex.map((e,i)=>`<div class="card"><div class="item">${esc(e.name)}<span><button class="x" data-a="chart" data-e="${i}">📈</button><button class="x" data-a="delX" data-e="${i}">✕</button></span></div>
+  <div class="grid h"><span>Set</span><span>Previous</span><span>Kg</span><span>Reps</span><span>✓</span></div>
+  ${e.sets.map((s,j)=>`<div class="grid"><span>${j+1}</span><span class="pv">${e.prev&&e.prev[j]?e.prev[j].kg+'×'+e.prev[j].reps:'–'}</span><input type="number" inputmode="decimal" value="${s.kg}" data-f="kg" data-e="${i}" data-s="${j}"><input type="number" inputmode="numeric" value="${s.reps}" data-f="reps" data-e="${i}" data-s="${j}"><input type="checkbox" ${s.done?'checked':''} data-f="done" data-e="${i}" data-s="${j}"></div>`).join('')}
+  <div class="row" style="margin:10px 0 0"><button class="btn" data-a="addS" data-e="${i}">+ Add Set</button><button class="btn" data-a="delS" data-e="${i}">− Remove Set</button></div></div>`).join(''):'<div class="empty">No exercises in this routine yet.</div>';
+  if(r.ex.length)h+='<button class="btn pri" style="width:100%" data-a="fin">Finish Workout ✓</button>';
+ }
+ app.innerHTML=h;
+}
+
+function renderModal(){
+ const mo=document.getElementById('mo');
+ if(!modal){mo.innerHTML='';return}
+ let b='';
+ if(modal==='routine')b='<h2>New Routine</h2><div class="add"><input type="text" id="mi" placeholder="Push, Pull, Legs…"><button class="btn pri" data-a="saveR">Add</button></div>';
+ if(modal==='lib')b='<h2>My Exercises</h2><div class="add"><input type="text" id="mi" placeholder="Bench Press…"><button class="btn pri" data-a="saveL">Add</button></div>'+(S.library.length?S.library.map((n,i)=>`<div class="item" style="padding:8px 0;font-size:16px">${esc(n)}<button class="x" data-a="delL" data-i="${i}">✕</button></div>`).join(''):'<div class="empty">Save the exercise names you use.</div>');
+ if(modal==='pick')b='<h2>Choose Exercise</h2>'+(S.library.length?S.library.map((n,i)=>`<button class="pick" data-a="pick" data-i="${i}">${esc(n)}</button>`).join(''):'<div class="empty">Your list is empty. Add names from the home screen with “Add Exercise”.</div>');
+ if(modal==='chart')b=chartHTML();
+ mo.innerHTML=`<div class="ov" data-a="close"><div class="md">${b}</div></div>`;
+ const i=document.getElementById('mi');if(i)i.focus();
+}
+
+document.addEventListener('click',ev=>{
+ const t=ev.target.closest('[data-a]');if(!t)return;
+ const a=t.dataset.a,id=t.dataset.id,e=+t.dataset.e,i=+t.dataset.i;
+ if(a==='close'){if(ev.target===t){modal=null;renderModal()}return}
+ if(a==='tt'){const T=S.timer;if(T.run){T.acc+=Date.now()-T.start;T.run=false}else{T.start=Date.now();T.run=true}save();tick();return}
+ if(a==='tr'){S.timer={run:false,start:0,acc:0};save();tick();return}
+ if(a==='r+'||a==='r-'){const dl=a==='r+'?15:-15;S.rest=Math.max(15,(S.rest||90)+dl);if(restEnd)restEnd+=dl*1000;save();restTick();return}
+ if(a==='rs'){restEnd=0;restTick();return}
+ if(a==='addR'){modal='routine';renderModal();return}
+ if(a==='addE'){modal='lib';renderModal();return}
+ if(a==='pickE'){modal='pick';renderModal();return}
+ if(a==='saveR'||a==='saveL'){const v=document.getElementById('mi').value.trim();if(!v)return;
+  if(a==='saveR'){S.routines.push({id:uid(),name:v,ex:[],days:[]});modal=null}else if(!S.library.includes(v))S.library.push(v);
+  save();render();renderModal();return}
+ if(a==='delL'){S.library.splice(i,1);save();renderModal();return}
+ if(a==='pick'){const r=R();r.ex.push({name:S.library[i],sets:[{kg:'',reps:'',done:false}],prev:null});modal=null;save();render();renderModal();return}
+ if(a==='open'){rid=id;render();window.scrollTo(0,0);return}
+ if(a==='home'){rid=null;render();return}
+ if(a==='delR'){ev.stopPropagation();if(confirm('Delete this routine?')){S.routines=S.routines.filter(r=>r.id!==id);save();render()}return}
+ const r=R();if(!r)return;
+ if(a==='day'){const d=+t.dataset.d,s=r.days=r.days||[],k=s.indexOf(d);k<0?s.push(d):s.splice(k,1);save();render();return}
+ if(a==='chart'){cx=e;modal='chart';renderModal();return}
+ if(a==='delX'){if(confirm('Remove exercise?')){r.ex.splice(e,1);save();render()}return}
+ if(a==='addS'){const x=r.ex[e],l=x.sets[x.sets.length-1]||{kg:'',reps:''};x.sets.push({kg:l.kg,reps:l.reps,done:false});save();render();return}
+ if(a==='delS'){if(r.ex[e].sets.length>1){r.ex[e].sets.pop();save();render()}return}
+ if(a==='fin'){r.ex.forEach(x=>{const top=Math.max(0,...x.sets.map(s=>+s.kg||0));x.hist=x.hist||[];if(top>0)x.hist.push({d:new Date().toLocaleDateString('en-GB'),top});x.prev=x.sets.map(s=>({kg:s.kg||0,reps:s.reps||0}));x.sets.forEach(s=>s.done=false)});
+  r.last=new Date().toLocaleDateString('en-GB');save();render();return}
+});
+document.addEventListener('input',ev=>{
+ const t=ev.target,f=t.dataset.f;if(!f)return;
+ const s=R().ex[+t.dataset.e].sets[+t.dataset.s];
+ s[f]=f==='done'?t.checked:t.value;save();if(f==='done'&&t.checked)startRest();
+});
+document.addEventListener('keydown',ev=>{if(ev.key==='Enter'&&ev.target.id==='mi'){const b=document.querySelector('.md .add [data-a]');if(b)b.click()}});
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();tick();
+</script>
+</body></html>
